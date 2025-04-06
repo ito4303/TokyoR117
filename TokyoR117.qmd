@@ -1,0 +1,42 @@
+---
+title: "観光来訪者数を状態空間モデルで解析する"
+author: "伊東宏樹"
+date: 2025-04-26
+lang: ja
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    code-copy: true
+embed-resources: true
+slide-number: true
+---
+
+## 自己紹介
+
+-   氏名: 伊東宏樹
+
+-   個人事業主（[伊東生態統計研究室](https://ito4303.sakura.ne.jp/)）
+
+    -   データ解析、執筆・翻訳、研修講師などお引き受けいたします。
+
+-   出版物: 『[BUGSで学ぶ階層モデリング入門](https://www.kyoritsu-pub.co.jp/book/b10003729.html)』『[生態学のための階層モデリング](https://www.kyoritsu-pub.co.jp/book/b10003301.html)』（以上共訳）など
+
+## Kanazawa.R #3
+
+[![](images/Kanazawa.R#3.jpg){fig-alt="[Kanazawa.R #3]" width="640"}](https://kanazawar.connpass.com/event/349762/)
+
+-   石川県金沢市でのR勉強会
+-   第3回を5月10日開催（現地+オンライン）
+-   詳細はconnpassのイベントページ [(]{style="font-size: 80%;"}<https://kanazawar.connpass.com/event/349762/>[)]{style="font-size: 80%;"}にて
+
+## 観光来訪者数
+
+データ
+
+## 状態空間モデル
+
+モデル
+
+## 結果
+
+結果
