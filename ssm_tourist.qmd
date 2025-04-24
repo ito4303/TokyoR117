@@ -1,0 +1,230 @@
+---
+title: "状態空間モデルによる観光来訪者数の解析"
+author: "伊東宏樹"
+date: 2025-04-26
+lang: ja
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    code-copy: true
+embed-resources: true
+slide-number: true
+---
+
+## 自己紹介
+
+-   氏名: 伊東宏樹
+
+-   個人事業主（[伊東生態統計研究室](https://ito4303.sakura.ne.jp/)）
+
+    -   データ解析、執筆・翻訳、研修講師などお引き受けいたします。
+
+-   出版物: 『[BUGSで学ぶ階層モデリング入門](https://www.kyoritsu-pub.co.jp/book/b10003729.html)』『[生態学のための階層モデリング](https://www.kyoritsu-pub.co.jp/book/b10003301.html)』（以上共訳）など
+
+## Kanazawa.R #3
+
+[![](images/Kanazawa.R3.jpg){fig-alt="[Kanazawa.R #3]" width="320"}](https://kanazawar.connpass.com/event/349762/)
+
+-   石川県金沢市でのR勉強会
+-   第3回を**5月10日**開催（現地+オンライン）— オンラインはまだ空きあります
+-   詳細はconnpassのイベントページ [(]{style="font-size: 80%;"}[https://kanazawar.connpass.com/event/349762/](https://kanazawar.connpass.com/event/349762/){.uri style="font-size: 66%;"}[)]{style="font-size: 80%;"}にて
+
+## 金沢市への観光来訪者数
+
+-   公益社団法人 日本観光振興協会 デジタル観光統計オープンデータを利用
+
+    -   2021〜2024年の各市区町村の観光来訪者数
+
+    -   携帯電話位置情報から取得
+
+-   金沢市のデータを抽出
+
+```{r}
+#| label: setup
+#| echo: false
+#| output: false
+
+library(readr)
+library(stringr)
+library(ggplot2)
+library(KFAS)
+
+font_family = "YuGothic"
+font_size = 18
+```
+
+```{r}
+#| label: read_data
+#| echo: false
+#| output: false
+
+data_dir <- "data"
+data_files <- c("city2021.csv", "city2022.csv", "city2023.csv", "city2024.csv")
+
+data_list <- purrr::map(data_files,
+                        \(f) read_csv(file = file.path(data_dir, f),
+                                      locale = locale(encoding = "CP932")))
+data <- dplyr::bind_rows(data_list)
+```
+
+## 読み込み・整理したデータ
+
+```{r}
+#| label: arrange_data
+#| echo: false
+#| output: false
+
+k_data <- data |>
+  dplyr::filter(`地域名称` == "金沢市") |>
+  dplyr::mutate(YM = str_c(`年`, `月`, sep = "/"),
+                Months = (`年` - 2021) * 12 + `月`,
+                Num = `人数` / 10000,
+                .keep = "none")
+```
+
+```{r}
+#| label: view_data
+#| echo: false
+
+max_months <- max(k_data$Months)
+p <- ggplot(k_data) +
+  geom_line(aes(x = Months, y = Num), linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(1, max_months - 5, 6),
+                     minor_breaks = seq(1, max_months, 3),
+                     labels = k_data$YM[seq(1, max_months - 5, 6)]) +
+  scale_y_continuous(name = "人数（万人）") +
+  theme_gray(base_family = font_family, base_size = font_size)
+plot(p)
+```
+
+::: {style="font-size: small"}
+デジタル観光統計オープンデータ（<https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/>）（2025年3月11日）を加工して作成しました。
+:::
+
+## 状態空間モデル
+
+-   観測モデル
+
+    -   目的変数: 観光来訪者数
+        -   もともとは計数値だが、数が大きく、さらに1万人単位としたので、正規分布を仮定
+
+-   状態モデル
+
+    -   回帰: 能登半島地震の影響（地震発生の2024年1月以降を示すダミー変数を説明変数に）
+
+    -   トレンド: 次数2のモデル（水準成分と傾き成分）
+
+    -   季節成分: 毎月の変動をダミー変数で
+
+```{r}
+#| label: model
+#| echo: false
+
+quake <- c(rep(0, 36), rep(1, 12))
+model <- SSModel(Num ~ SSMregression(~ quake, Q = NA) +
+                   SSMtrend(degree = 2,
+                            Q = list(matrix(NA), matrix(NA))) +
+                   SSMseasonal(period = 12, Q = NA, sea.type = "dummy"),
+                 H = NA, data = k_data)
+fit <- fitSSM(model, inits = c(0, 0, 0, 0, 0))
+```
+
+## あてはめと平滑化
+
+-   [KFAS](https://cran.r-project.org/package=KFAS)を使用
+
+-   状態モデル・観測モデルの分散を推定
+
+-   カルマンフィルタによる平滑化
+
+```{r}
+#| label: smooth
+
+smooth <- KFS(fit$model) |>
+  coef(filtered = FALSE)
+```
+
+## 結果: 地震の影響
+
+地震影響の係数の推定値
+
+```{r}
+#| label: quake
+
+ggplot(data = data.frame(Months = (max_months - 11):max_months,
+                         quake = smooth[, "quake"][37:48])) +
+  geom_line(mapping = aes(x = Months, y = quake),
+            color = "red", linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(max_months - 11, max_months, 2),
+                     minor_breaks = seq(max_months - 11, max_months, 1),
+                     labels = k_data$YM[seq(max_months - 11, max_months, 2)]) +
+  scale_y_continuous(name = "地震影響", limits = c(-10, 0)) +
+  theme_gray(base_family = font_family, base_size = font_size)
+```
+
+1か月の来訪者数がおよそ`r round(-smooth[, "quake"][37], 1)`万人減少と推定
+
+## 結果: 水準成分
+
+```{r}
+#| label: plot_level
+#| echo: false
+
+ggplot(data = data.frame(Months = 1:max_months,
+                         level = c(smooth[, "level"]))) +
+  geom_line(mapping = aes(x = Months, y = level),
+            color = "red", linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(1, max_months - 5, 6),
+                     minor_breaks = seq(1, max_months, 3),
+                     labels = k_data$YM[seq(1, max_months - 5, 6)]) +
+  scale_y_continuous(name = "Level") +
+  theme_gray(base_family = font_family, base_size = font_size)
+```
+
+## 傾き成分
+
+```{r}
+#| label: plot_slope
+#| echo: false
+
+ggplot(data = data.frame(Months = 1:max_months,
+                         slope = c(smooth[, "slope"]))) +
+  geom_line(mapping = aes(x = Months, y = slope),
+            color = "red", linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(1, max_months - 5, 6),
+                     minor_breaks = seq(1, max_months, 3),
+                     labels = k_data$YM[seq(1, max_months - 5, 6)]) +
+  scale_y_continuous(name = "Slope") +
+  theme_gray(base_family = font_family, base_size = font_size)
+```
+
+## 季節成分
+
+```{r}
+#| label: plot_seasonal
+
+ggplot(data = data.frame(Months = 1:max_months,
+                         seasonal = c(smooth[, "sea_dummy1"]))) +
+  geom_line(mapping = aes(x = Months, y = seasonal),
+            color = "red", linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(1, max_months - 5, 6),
+                     minor_breaks = seq(1, max_months, 1),
+                     labels = k_data$YM[seq(1, max_months - 5, 6)]) +
+  scale_y_continuous(name = "Seasonal") +
+  theme_gray(base_family = font_family, base_size = font_size)
+```
+
+## まとめ
+
+-   能登半島地震の影響による来訪者数の減少は1月あたり`r round(-smooth[, "quake"][37], 1)`万人程度と推定
+    -   厳密に言うと、2024年1月以降の減少なので、同時期の他の影響もありうる
+-   2021年の秋以降、来訪者数は増加傾向にあるが、増加率は最近減少
+-   来訪者数は毎年11月にもっとも多く、つづいて5月、3月の順
+-   来訪者数が少なくなるのは1月と2月
+
+コードは <https://github.com/ito4303/TokyoR117> にあります。
