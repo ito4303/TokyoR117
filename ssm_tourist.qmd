@@ -26,7 +26,7 @@ slide-number: true
 [![](images/Kanazawa.R3.jpg){fig-alt="[Kanazawa.R #3]" width="320"}](https://kanazawar.connpass.com/event/349762/)
 
 -   石川県金沢市でのR勉強会
--   第3回を5月10日開催（現地+オンライン）
+-   第3回を**5月10日**開催（現地+オンライン）— オンラインはまだ空きあります
 -   詳細はconnpassのイベントページ [(]{style="font-size: 80%;"}[https://kanazawar.connpass.com/event/349762/](https://kanazawar.connpass.com/event/349762/){.uri style="font-size: 66%;"}[)]{style="font-size: 80%;"}にて
 
 ## 金沢市への観光来訪者数
