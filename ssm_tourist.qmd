@@ -11,27 +11,16 @@ embed-resources: true
 slide-number: true
 ---
 
-## 自己紹介
-
--   氏名: 伊東宏樹
-
--   個人事業主（[伊東生態統計研究室](https://ito4303.sakura.ne.jp/)）
-
-    -   データ解析、執筆・翻訳、研修講師などお引き受けいたします。
-
--   出版物: 『[BUGSで学ぶ階層モデリング入門](https://www.kyoritsu-pub.co.jp/book/b10003729.html)』『[生態学のための階層モデリング](https://www.kyoritsu-pub.co.jp/book/b10003301.html)』（以上共訳）など
-
 ## Kanazawa.R #3
 
-[![](images/Kanazawa.R3.jpg){fig-alt="[Kanazawa.R #3]" width="320"}](https://kanazawar.connpass.com/event/349762/)
+[![](images/Kanazawa.R3.jpg){fig-alt="[Kanazawa.R #3]" fig-align="center" width="480"}](https://kanazawar.connpass.com/event/349762/)
 
--   石川県金沢市でのR勉強会
--   第3回を**5月10日**開催（現地+オンライン）— オンラインはまだ空きあります
+-   **5月10日**開催 — オンラインはまだ空きあります
 -   詳細はconnpassのイベントページ [(]{style="font-size: 80%;"}[https://kanazawar.connpass.com/event/349762/](https://kanazawar.connpass.com/event/349762/){.uri style="font-size: 66%;"}[)]{style="font-size: 80%;"}にて
 
-## 金沢市への観光来訪者数
+## 金沢市への観光来訪者数の時間変化を分析したい
 
--   公益社団法人 日本観光振興協会 デジタル観光統計オープンデータを利用
+-   公益社団法人 日本観光振興協会 [デジタル観光統計オープンデータ](https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/)を利用
 
     -   2021〜2024年の各市区町村の観光来訪者数
 
@@ -221,10 +210,8 @@ ggplot(data = data.frame(Months = 1:max_months,
 
 ## まとめ
 
--   能登半島地震の影響による来訪者数の減少は1月あたり`r round(-smooth[, "quake"][37], 1)`万人程度と推定
-    -   厳密に言うと、2024年1月以降の減少なので、同時期の他の影響もありうる
+-   能登半島地震の影響による来訪者数の減少は1か月あたり`r round(-smooth[, "quake"][37], 1)`万人程度と推定
+    -   [厳密に言うと、2024年1月以降の減少なので、同時期の他の影響もありうる]{style="font-size: 90%;"}
 -   2021年の秋以降、来訪者数は増加傾向にあるが、増加率は最近減少
--   来訪者数は毎年11月にもっとも多く、つづいて5月、3月の順
+-   来訪者数は毎年11月にもっとも多い
 -   来訪者数が少なくなるのは1月と2月
-
-コードは <https://github.com/ito4303/TokyoR117> にあります。
