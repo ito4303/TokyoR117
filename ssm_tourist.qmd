@@ -18,13 +18,13 @@ slide-number: true
 -   **5月10日**開催 — オンラインはまだ空きあります
 -   詳細はconnpassのイベントページ [(]{style="font-size: 80%;"}[https://kanazawar.connpass.com/event/349762/](https://kanazawar.connpass.com/event/349762/){.uri style="font-size: 66%;"}[)]{style="font-size: 80%;"}にて
 
-## 金沢市への観光来訪者数の時間変化を分析したい
+## 金沢市への観光来訪者数はどのように変動しているか
 
 -   公益社団法人 日本観光振興協会 [デジタル観光統計オープンデータ](https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/)を利用
 
-    -   2021〜2024年の各市区町村の観光来訪者数
+    -   2021〜2024年の全国各市区町村の観光来訪者数
 
-    -   携帯電話位置情報から取得
+        -   携帯電話位置情報から取得
 
 -   金沢市のデータを抽出
 
@@ -106,30 +106,35 @@ plot(p)
 
     -   季節成分: 毎月の変動をダミー変数で
 
+## モデルのRコード
+
+[KFAS](https://cran.r-project.org/package=KFAS)でモデルを作成
+
 ```{r}
 #| label: model
-#| echo: false
+#| echo: true
 
-quake <- c(rep(0, 36), rep(1, 12))
-model <- SSModel(Num ~ SSMregression(~ quake, Q = NA) +
-                   SSMtrend(degree = 2,
-                            Q = list(matrix(NA), matrix(NA))) +
-                   SSMseasonal(period = 12, Q = NA, sea.type = "dummy"),
-                 H = NA, data = k_data)
-fit <- fitSSM(model, inits = c(0, 0, 0, 0, 0))
+quake <- c(rep(0, 36), rep(1, 12)) # 地震影響のダミー変数
+model <- SSModel(
+  Num ~ SSMregression(~ quake, Q = NA) + # 回帰成分
+        SSMtrend(degree = 2,             # トレンド成分
+                 Q = list(matrix(NA), matrix(NA))) +
+        SSMseasonal(period = 12, Q = NA, # 季節成分
+                    sea.type = "dummy"),
+  H = NA, data = k_data)
 ```
 
 ## あてはめと平滑化
 
--   [KFAS](https://cran.r-project.org/package=KFAS)を使用
-
--   状態モデル・観測モデルの分散を推定
+-   モデルあてはめ: 状態モデル・観測モデルの分散を推定
 
 -   カルマンフィルタによる平滑化
 
 ```{r}
 #| label: smooth
+#| echo: true
 
+fit <- fitSSM(model, inits = c(0, 0, 0, 0, 0))
 smooth <- KFS(fit$model) |>
   coef(filtered = FALSE)
 ```
